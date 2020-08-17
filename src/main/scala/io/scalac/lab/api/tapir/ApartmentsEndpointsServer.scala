@@ -1,0 +1,23 @@
+package io.scalac.lab.api.tapir
+
+import akka.http.scaladsl.server.Route
+import io.scalac.lab.api.storage.ApartmentsStorage
+import sttp.tapir.server.akkahttp._
+
+/**
+  * This class shows that Tapir does not require any additional implementation
+  * other than what we have in definition and we can add our logic directly
+ **/
+class ApartmentsEndpointsServer(storage: ApartmentsStorage) extends ApartmentsEndpointsDefinition {
+
+  val listApartmentsRoute: Route = listApartments.serverLogic(_ => storage.list()).toRoute
+
+  val getApartmentRoute: Route = getApartment.serverLogic(id => storage.get(id)).toRoute
+
+  val findApartmentRoute: Route = findApartment.serverLogic { case (city, street, number) => storage.find(city, street, number) }.toRoute
+
+  val addApartmentRoute: Route = addApartment.serverLogic(apartment => storage.save(apartment)).toRoute
+
+  val deleteApartmentRoute: Route = deleteApartment.serverLogic(id => storage.delete(id)).toRoute
+
+}
