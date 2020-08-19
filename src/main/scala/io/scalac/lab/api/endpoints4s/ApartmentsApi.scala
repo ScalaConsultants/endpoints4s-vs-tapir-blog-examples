@@ -5,12 +5,14 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import endpoints4s.akkahttp.server
-import endpoints4s.openapi
-import endpoints4s.openapi.model.{Info, OpenApi}
+import endpoints4s.openapi.model.{Info, OpenApi, SecurityRequirement, SecurityScheme}
+import endpoints4s.{Tupler, openapi}
+import io.scalac.lab.api.security.Security.ApiKey
+import io.scalac.lab.api.security.SecurityService
 import io.scalac.lab.api.storage.InMemoryApartmentsStorage
 import io.scalac.lab.api.tapir.ApartmentsEndpointsServer
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.io.StdIn
 
 object ApartmentsApi extends App {
@@ -31,6 +33,19 @@ object ApartmentsApi extends App {
       addApartment,
       deleteApartment
     )
+
+    override def authenticatedRequest[I, O](request: DocumentedRequest)(implicit tupler: Tupler.Aux[I, ApiKey, O]): DocumentedRequest =
+      request
+
+    // To make Swagger UI work with Authorize Button, we need to add Security Requirement,
+    // because Endpoints4s is not going to do that for us.
+    override def authenticatedEndpoint[U, O, I](request: DocumentedRequest, response: List[DocumentedResponse], docs: EndpointDocs)(
+        implicit
+        tupler: Tupler.Aux[U, ApiKey, I]): DocumentedEndpoint =
+      super
+        .authenticatedEndpoint(request, response, docs)
+        .withSecurity(SecurityRequirement("apiKeyAuth", SecurityScheme("apiKey", None, Some("api-key"), Some("header"), None, None)))
+
   }
 
   private object DocumentationServer extends server.Endpoints with server.JsonEntitiesFromEncodersAndDecoders {
@@ -53,7 +68,14 @@ object ApartmentsApi extends App {
   }
 
   private val apiStorage = new InMemoryApartmentsStorage()
-  private val api = new ApartmentsEndpointsServer(apiStorage)
+  private val apiSecurity = new SecurityService {
+    override def authenticate(token: Option[String]): Future[Either[String, ApiKey]] =
+      token match {
+        case Some(value) if value == "admin" => Future.successful(Right(ApiKey(value)))
+        case _                               => Future.successful(Left("Authentication failed!"))
+      }
+  }
+  private val api = new ApartmentsEndpointsServer(apiStorage, apiSecurity)
   private val apiRoutes =
     concat(
       api.listApartmentsRoute,
