@@ -2,7 +2,7 @@ package io.scalac.lab.api.endpoints4s
 
 import endpoints4s.algebra.{Endpoints, JsonEntitiesFromSchemas}
 import endpoints4s.generic.JsonSchemas
-import io.scalac.lab.api.model.Apartment
+import io.scalac.lab.api.model.{Address, Apartment, Paging}
 import io.scalac.lab.api.security.Security.ApiKey
 
 /**
@@ -15,13 +15,19 @@ import io.scalac.lab.api.security.Security.ApiKey
   * - fourth for adding new apartment,
   * - fifth for deleting apartment by id.
   */
-trait ApartmentsEndpointsDefinition extends Endpoints with JsonEntitiesFromSchemas with JsonSchemas with SecuritySupport {
+trait ApartmentsEndpointsDefinition
+    extends Endpoints
+    with JsonEntitiesFromSchemas
+    with JsonSchemas
+    with SecuritySupport
+    with QueryStringParams {
 
+  private implicit val addressSchema: JsonSchema[Address] = genericJsonSchema
   private implicit val apartmentSchema: JsonSchema[Apartment] = genericJsonSchema
 
-  val listApartments: Endpoint[ApiKey, Either[String, List[Apartment]]] =
+  val listApartments: Endpoint[(Paging, ApiKey), Either[String, List[Apartment]]] =
     authenticatedEndpoint(
-      request = get(path / "v1" / "data" / "apartments"),
+      request = get(path / "v1" / "data" / "apartments" /? pagingQueryString),
       response = response(BadRequest, textResponse, Some("An error message, when something went wrong or apartment could not be found"))
         .orElse(ok(jsonResponse[List[Apartment]], Some("A list of apartments"))),
       docs = EndpointDocs().withDescription(Some("An endpoint responsible for listing all available apartments"))
@@ -35,14 +41,9 @@ trait ApartmentsEndpointsDefinition extends Endpoints with JsonEntitiesFromSchem
       docs = EndpointDocs().withDescription(Some("An endpoint responsible for getting specific apartment by id"))
     )
 
-  val findApartment: Endpoint[(String, String, String, ApiKey), Either[String, Apartment]] =
+  val findApartment: Endpoint[(Address, ApiKey), Either[String, Apartment]] =
     authenticatedEndpoint(
-      request = get(
-        path / "v1" / "data" / "apartments" / "search" /? (
-          qs[String]("city", Some("A city we want to find apartment for")) &
-            qs[String]("street", Some("A street we want to find apartment for")) &
-            qs[String]("number", Some("A street number we want to find apartment for"))
-        )),
+      request = get(path / "v1" / "data" / "apartments" / "search" /? addressQueryString),
       response = response(BadRequest, textResponse, Some("An error message, when something went wrong or apartment could not be found"))
         .orElse(ok(jsonResponse[Apartment], Some("An apartment found for query string parameters"))),
       docs = EndpointDocs().withDescription(Some("An endpoint responsible for finding specific apartment by search predicates"))

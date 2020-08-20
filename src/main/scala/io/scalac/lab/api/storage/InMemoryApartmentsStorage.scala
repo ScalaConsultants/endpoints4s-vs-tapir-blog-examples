@@ -16,8 +16,8 @@ class InMemoryApartmentsStorage(initState: () => List[Apartment] = () => List.em
   private val storageId = new AtomicLong()
   private var storage: List[Apartment] = initState()
 
-  override def list(): Future[Either[String, List[Apartment]]] =
-    Future.successful(Right(storage))
+  override def list(from: Int, limit: Option[Int]): Future[Either[String, List[Apartment]]] =
+    Future.successful(Right(storage.slice(from, from + limit.getOrElse(storage.length))))
 
   override def get(id: Int): Future[Either[String, Apartment]] =
     storage.find(_.id.contains(id)) match {
@@ -26,7 +26,11 @@ class InMemoryApartmentsStorage(initState: () => List[Apartment] = () => List.em
     }
 
   override def find(city: String, street: String, number: String): Future[Either[String, Apartment]] = {
-    storage.find(a => a.city.equalsIgnoreCase(city) && a.street.equalsIgnoreCase(street) && a.number.equalsIgnoreCase(number)) match {
+    storage.find { s =>
+      s.address.city.equalsIgnoreCase(city) &&
+      s.address.street.equalsIgnoreCase(street) &&
+      s.address.number.equalsIgnoreCase(number)
+    } match {
       case Some(value) => Future.successful(Right(value))
       case None        => Future.successful(Left(s"Apartment for city: $city, street: $street, number: $number not found!"))
     }

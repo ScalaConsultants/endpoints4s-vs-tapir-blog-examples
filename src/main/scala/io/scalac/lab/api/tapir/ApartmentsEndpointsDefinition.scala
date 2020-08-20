@@ -1,8 +1,9 @@
 package io.scalac.lab.api.tapir
 
 import io.circe.generic.auto._
-import io.scalac.lab.api.model.Apartment
+import io.scalac.lab.api.model.{Address, Apartment, Paging}
 import io.scalac.lab.api.security.Security.ApiKey
+import io.scalac.lab.api.tapir.QueryStringParams._
 import sttp.tapir._
 import sttp.tapir.json.circe._
 import sttp.tapir.server.PartialServerEndpoint
@@ -19,16 +20,17 @@ import sttp.tapir.server.PartialServerEndpoint
   */
 trait ApartmentsEndpointsDefinition[F[_]] extends SecuritySupport[F] {
 
-  val listApartments: PartialServerEndpoint[ApiKey, Unit, String, List[Apartment], Nothing, F] =
+  val listApartments: PartialServerEndpoint[ApiKey, Paging, String, List[Apartment], Nothing, F] =
     securedEndpoint.get
       .in("v1" / "data" / "apartments")
+      .in(pagingIn)
       .out(
         jsonBody[List[Apartment]]
           .description("A list of apartments")
           .example(
             List(
-              Apartment(Some(100), "Poznan", "Gorna Wilda", "3", "City of Poznan", 250000),
-              Apartment(Some(101), "Warsaw", "Marszalkowska", "1", "City of Warsaw", 500000)
+              Apartment(Some(100), Address("Poznan", "Gorna Wilda", "3"), "City of Poznan", 250000),
+              Apartment(Some(101), Address("Warsaw", "Marszalkowska", "1"), "City of Warsaw", 500000)
             )
           )
       )
@@ -44,26 +46,18 @@ trait ApartmentsEndpointsDefinition[F[_]] extends SecuritySupport[F] {
       .out(
         jsonBody[Apartment]
           .description("An apartment found for given id")
-          .example(Apartment(Some(101), "Warsaw", "Marszalkowska", "1", "City of Warsaw", 500000))
+          .example(Apartment(Some(101), Address("Warsaw", "Marszalkowska", "1"), "City of Warsaw", 500000))
       )
       .description("An endpoint responsible for getting specific apartment by id")
 
-  val findApartment: PartialServerEndpoint[ApiKey, (String, String, String), String, Apartment, Nothing, F] =
+  val findApartment: PartialServerEndpoint[ApiKey, Address, String, Apartment, Nothing, F] =
     securedEndpoint.get
       .in("v1" / "data" / "apartments" / "search")
-      .in(query[String]("city")
-        .description("A city we want to find apartment for")
-        .example("Warsaw"))
-      .in(query[String]("street")
-        .description("A street we want to find apartment for")
-        .example("Pulawska"))
-      .in(query[String]("number")
-        .description("A street number we want to find apartment for")
-        .example("10A"))
+      .in(addressIn)
       .out(
         jsonBody[Apartment]
           .description("An apartment found for query string parameters")
-          .example(Apartment(Some(1), "Warsaw", "Pulawska", "10A", "City of Warsaw", 100000))
+          .example(Apartment(Some(1), Address("Warsaw", "Pulawska", "10A"), "City of Warsaw", 100000))
       )
       .description("An endpoint responsible for finding specific apartment by search predicates")
 
@@ -73,12 +67,12 @@ trait ApartmentsEndpointsDefinition[F[_]] extends SecuritySupport[F] {
       .in(
         jsonBody[Apartment]
           .description("An apartment to be added in the storage")
-          .example(Apartment(None, "Wroclaw", "Kutrzeby", "11", "Jan Nowak", 100000))
+          .example(Apartment(None, Address("Wroclaw", "Kutrzeby", "11"), "Jan Nowak", 100000))
       )
       .out(
         jsonBody[Apartment]
           .description("An apartment saved in the storage")
-          .example(Apartment(Some(102), "Wroclaw", "Kutrzeby", "11", "Jan Nowak", 100000))
+          .example(Apartment(Some(102), Address("Wroclaw", "Kutrzeby", "11"), "Jan Nowak", 100000))
       )
       .description("An endpoint responsible for adding new apartment")
 
@@ -92,7 +86,7 @@ trait ApartmentsEndpointsDefinition[F[_]] extends SecuritySupport[F] {
       .out(
         jsonBody[Apartment]
           .description("An apartment deleted")
-          .example(Apartment(Some(100), "Poznan", "Gorna Wilda", "3", "City of Poznan", 250000))
+          .example(Apartment(Some(100), Address("Poznan", "Gorna Wilda", "3"), "City of Poznan", 250000))
       )
       .description("An endpoint responsible for deleting apartment by id")
 

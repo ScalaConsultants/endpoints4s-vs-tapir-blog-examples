@@ -15,9 +15,8 @@ trait SecuritySupport extends Endpoints {
     * Returns an endpoint requiring authentication information to be provided in the specific request header.
     * It returns `response` if the request is correctly authenticated, otherwise it returns an empty `Unauthorized` response.
     */
-  def authenticatedEndpoint[U, O, I](request: Request[U], response: Response[O], docs: EndpointDocs = EndpointDocs())(implicit
-      tupler: Tupler.Aux[U, ApiKey, I]
-  ): Endpoint[I, O] =
+  def authenticatedEndpoint[U, O, I](request: Request[U], response: Response[O], docs: EndpointDocs = EndpointDocs())(
+      implicit tupler: Tupler.Aux[U, ApiKey, I]): Endpoint[I, O] =
     endpoint(
       authenticatedRequest(request),
       response,

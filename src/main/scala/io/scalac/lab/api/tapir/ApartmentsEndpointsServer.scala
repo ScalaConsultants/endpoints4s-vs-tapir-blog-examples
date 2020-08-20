@@ -14,12 +14,12 @@ import scala.concurrent.Future
  **/
 class ApartmentsEndpointsServer(storage: ApartmentsStorage, security: SecurityService) extends ApartmentsEndpointsDefinition[Future] {
 
-  val listApartmentsRoute: Route = listApartments.serverLogic(_ => storage.list()).toRoute
+  val listApartmentsRoute: Route = listApartments.serverLogic { case (_, paging) => storage.list(paging.from, paging.limit) }.toRoute
 
   val getApartmentRoute: Route = getApartment.serverLogic { case (_, id) => storage.get(id) }.toRoute
 
   val findApartmentRoute: Route = findApartment.serverLogic {
-    case (_, (city, street, number)) => storage.find(city, street, number)
+    case (_, address) => storage.find(address.city, address.street, address.number)
   }.toRoute
 
   val addApartmentRoute: Route = addApartment.serverLogic { case (_, apartment) => storage.save(apartment) }.toRoute

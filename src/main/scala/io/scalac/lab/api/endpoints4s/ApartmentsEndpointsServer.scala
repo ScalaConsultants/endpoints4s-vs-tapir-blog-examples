@@ -16,11 +16,13 @@ class ApartmentsEndpointsServer(storage: ApartmentsStorage, security: SecuritySe
     with BuiltInErrors
     with JsonEntitiesFromSchemas {
 
-  val listApartmentsRoute: Route = listApartments.implementedByAsync(_ => storage.list())
+  val listApartmentsRoute: Route = listApartments.implementedByAsync { case (paging, _) => storage.list(paging.from, paging.limit) }
 
   val getApartmentRoute: Route = getApartment.implementedByAsync { case (id, _) => storage.get(id) }
 
-  val findApartmentRoute: Route = findApartment.implementedByAsync { case (city, street, number, _) => storage.find(city, street, number) }
+  val findApartmentRoute: Route = findApartment.implementedByAsync {
+    case (address, _) => storage.find(address.city, address.street, address.number)
+  }
 
   val addApartmentRoute: Route = addApartment.implementedByAsync { case (apartment, _) => storage.save(apartment) }
 
@@ -30,7 +32,7 @@ class ApartmentsEndpointsServer(storage: ApartmentsStorage, security: SecuritySe
     optionalHeaderValueByName("api-key").flatMap { authToken: Option[String] =>
       onComplete(security.authenticate(authToken)).flatMap {
         case Success(Right(apiKey)) => request.map(r => tupler(r, apiKey))
-        case _ => complete((Unauthorized, authToken.fold("Missing API key")(_ => "Incorrect API key")))
+        case _                      => complete((Unauthorized, authToken.fold("Missing API key")(_ => "Incorrect API key")))
       }
     }
   }
