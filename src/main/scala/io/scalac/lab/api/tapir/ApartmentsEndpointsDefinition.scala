@@ -28,7 +28,8 @@ trait ApartmentsEndpointsDefinition {
             List(
               Apartment(Some(100), "Poznan", "Gorna Wilda", "3", "City of Poznan", 250000),
               Apartment(Some(101), "Warsaw", "Marszalkowska", "1", "City of Warsaw", 500000)
-            ))
+            )
+          )
       )
       .description("An endpoint responsible for listing all available apartments")
 

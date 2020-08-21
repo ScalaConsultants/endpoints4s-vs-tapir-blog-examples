@@ -20,7 +20,10 @@ object Dependencies {
   val tapir = Seq(
     "com.softwaremill.sttp.tapir" %% "tapir-core" % Versions.tapir,
     "com.softwaremill.sttp.tapir" %% "tapir-json-circe" % Versions.tapir,
-    "com.softwaremill.sttp.tapir" %% "tapir-akka-http-server" % Versions.tapir excludeAll ExclusionRule("com.typesafe.akka")
+    "com.softwaremill.sttp.tapir" %% "tapir-akka-http-server" % Versions.tapir excludeAll ExclusionRule("com.typesafe.akka"),
+    "com.softwaremill.sttp.tapir" %% "tapir-openapi-docs" % Versions.tapir,
+    "com.softwaremill.sttp.tapir" %% "tapir-openapi-circe-yaml" % Versions.tapir,
+    "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-akka-http" % Versions.tapir excludeAll ExclusionRule("com.typesafe.akka")
   )
 
   val akka = Seq(
