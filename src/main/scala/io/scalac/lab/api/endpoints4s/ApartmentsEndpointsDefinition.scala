@@ -35,7 +35,7 @@ trait ApartmentsEndpointsDefinition
 
   val getApartment: Endpoint[(Int, ApiKey), Either[ApiError, Apartment]] =
     authenticatedEndpoint(
-      request = get(path / "v1" / "data" / "apartments" / segment[Int]("id")),
+      request = get(path / "v1" / "data" / "apartments" / segment[Int]("id", Some("The identifier of the apartment to be found"))),
       response = withStatusCodes(ok(jsonResponse[Apartment], Some("An apartment found for given id")), Unauthorized, NotFound),
       docs = EndpointDocs().withDescription(Some("An endpoint responsible for getting specific apartment by id"))
     )
