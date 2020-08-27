@@ -7,6 +7,8 @@ import akka.http.scaladsl.server.Route
 import endpoints4s.akkahttp.server
 import endpoints4s.openapi.model.{Info, OpenApi, SecurityRequirement, SecurityScheme}
 import endpoints4s.{Tupler, openapi}
+import io.scalac.lab.api.model.ApiError
+import io.scalac.lab.api.model.ApiError.UnauthorizedError
 import io.scalac.lab.api.security.Security.ApiKey
 import io.scalac.lab.api.security.SecurityService
 import io.scalac.lab.api.storage.InMemoryApartmentsStorage
@@ -46,6 +48,19 @@ object ApartmentsApi extends App {
         .authenticatedEndpoint(request, response, docs)
         .withSecurity(SecurityRequirement("apiKeyAuth", SecurityScheme("apiKey", None, Some("api-key"), Some("header"), None, None)))
 
+    override def withStatusCodes[A](responses: List[DocumentedResponse], codes: Int*): List[DocumentedResponse] = {
+      responses :++ codes.flatMap {
+        case 400 => badRequest
+        case 401 => unauthorized
+        case 404 => notFound
+      }
+    }
+
+    // We are going to return empty responses here for errors,
+    // because we want to customize status codes for each endpoint independently
+    override lazy val clientErrorsResponse: List[DocumentedResponse] = List.empty
+    override lazy val serverErrorResponse: List[DocumentedResponse] = List.empty
+
   }
 
   private object DocumentationServer extends server.Endpoints with server.JsonEntitiesFromEncodersAndDecoders {
@@ -69,10 +84,10 @@ object ApartmentsApi extends App {
 
   private val apiStorage = new InMemoryApartmentsStorage()
   private val apiSecurity = new SecurityService {
-    override def authenticate(token: Option[String]): Future[Either[String, ApiKey]] =
+    override def authenticate(token: Option[String]): Future[Either[ApiError, ApiKey]] =
       token match {
         case Some(value) if value == "admin" => Future.successful(Right(ApiKey(value)))
-        case _                               => Future.successful(Left("Authentication failed!"))
+        case _                               => Future.successful(Left(UnauthorizedError("Authentication failed!")))
       }
   }
   private val api = new ApartmentsEndpointsServer(apiStorage, apiSecurity)

@@ -9,6 +9,7 @@ object Dependencies {
     val scalaTest = "3.2.0"
     val akka = "2.6.8"
     val akkaHttp = "10.2.0"
+    val akkaCirce = "1.31.0"
   }
 
   val endpoints = Seq(
@@ -32,6 +33,10 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-http" % Versions.akkaHttp,
     "com.typesafe.akka" %% "akka-testkit" % Versions.akka % Test,
     "com.typesafe.akka" %% "akka-http-testkit" % Versions.akkaHttp % Test
+  )
+
+  val akkaCirce = Seq(
+    "de.heikoseeberger" %% "akka-http-circe" % Versions.akkaCirce
   )
 
   val circe = Seq(

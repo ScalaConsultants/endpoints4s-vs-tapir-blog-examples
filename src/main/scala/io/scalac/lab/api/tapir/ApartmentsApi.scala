@@ -3,6 +3,7 @@ package io.scalac.lab.api.tapir
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
+import io.scalac.lab.api.model.ApiError
 import io.scalac.lab.api.security.Security.ApiKey
 import io.scalac.lab.api.security.SecurityService
 import io.scalac.lab.api.storage.InMemoryApartmentsStorage
@@ -21,10 +22,12 @@ object ApartmentsApi extends App {
 
   private val apiStorage = new InMemoryApartmentsStorage()
   private val apiSecurity = new SecurityService {
-    override def authenticate(token: Option[String]): Future[Either[String, ApiKey]] =
+    override def authenticate(token: Option[String]): Future[Either[ApiError, ApiKey]] =
       token match {
         case Some(value) if value == "admin" => Future.successful(Right(ApiKey(value)))
-        case _                               => Future.successful(Left("Authentication failed!"))
+        case _ =>
+          val message = token.fold("Authentication token was not provided")(_ => "Authentication token is not valid!")
+          Future.successful(Left(ApiError.UnauthorizedError(message)))
       }
   }
   private val api = new ApartmentsEndpointsServer(apiStorage, apiSecurity)

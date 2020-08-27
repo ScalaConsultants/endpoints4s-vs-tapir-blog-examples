@@ -9,6 +9,7 @@ libraryDependencies :=
     Dependencies.tapir ++
     Dependencies.akka ++
     Dependencies.circe ++
+    Dependencies.akkaCirce ++
     Dependencies.scalaTest
 
 addCommandAlias("runTapirApi", "runMain io.scalac.lab.api.tapir.ApartmentsApi")

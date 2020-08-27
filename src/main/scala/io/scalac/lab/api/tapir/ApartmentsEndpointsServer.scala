@@ -1,6 +1,7 @@
 package io.scalac.lab.api.tapir
 
 import akka.http.scaladsl.server.Route
+import io.scalac.lab.api.model.ApiError
 import io.scalac.lab.api.security.Security.ApiKey
 import io.scalac.lab.api.security.SecurityService
 import io.scalac.lab.api.storage.ApartmentsStorage
@@ -26,6 +27,6 @@ class ApartmentsEndpointsServer(storage: ApartmentsStorage, security: SecuritySe
 
   val deleteApartmentRoute: Route = deleteApartment.serverLogic { case (_, id) => storage.delete(id) }.toRoute
 
-  override def authenticate(token: Option[String]): Future[Either[String, ApiKey]] = security.authenticate(token)
+  override def authenticate(token: Option[String]): Future[Either[ApiError, ApiKey]] = security.authenticate(token)
 
 }

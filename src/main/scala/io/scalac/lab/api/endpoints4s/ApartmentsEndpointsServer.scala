@@ -2,8 +2,11 @@ package io.scalac.lab.api.endpoints4s
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Directive1, Route}
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import endpoints4s.Tupler
 import endpoints4s.akkahttp.server.{BuiltInErrors, Endpoints, JsonEntitiesFromSchemas}
+import io.circe.generic.auto._
+import io.scalac.lab.api.model.ApiError
 import io.scalac.lab.api.security.Security.ApiKey
 import io.scalac.lab.api.security.SecurityService
 import io.scalac.lab.api.storage.ApartmentsStorage
@@ -14,7 +17,8 @@ class ApartmentsEndpointsServer(storage: ApartmentsStorage, security: SecuritySe
     extends ApartmentsEndpointsDefinition
     with Endpoints
     with BuiltInErrors
-    with JsonEntitiesFromSchemas {
+    with JsonEntitiesFromSchemas
+    with FailFastCirceSupport {
 
   val listApartmentsRoute: Route = listApartments.implementedByAsync { case (paging, _) => storage.list(paging.from, paging.limit) }
 
@@ -35,5 +39,12 @@ class ApartmentsEndpointsServer(storage: ApartmentsStorage, security: SecuritySe
         case _                      => complete((Unauthorized, authToken.fold("Missing API key")(_ => "Incorrect API key")))
       }
     }
+  }
+
+  override def withStatusCodes[A](response: A => Route, codes: StatusCode*): Either[ApiError, A] => Route = {
+    case Left(x @ ApiError.UnauthorizedError(_)) => complete(Unauthorized, x)
+    case Left(x @ ApiError.NotFoundError(_))     => complete(NotFound, x)
+    case Left(x @ ApiError.BadRequestError(_))   => complete(BadRequest, x)
+    case Right(value)                            => response(value)
   }
 }

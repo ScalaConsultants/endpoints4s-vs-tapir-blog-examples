@@ -1,7 +1,7 @@
 package io.scalac.lab.api.tapir
 
 import io.circe.generic.auto._
-import io.scalac.lab.api.model.{Address, Apartment, Paging}
+import io.scalac.lab.api.model.{Address, Apartment, ApiError, Paging}
 import io.scalac.lab.api.security.Security.ApiKey
 import io.scalac.lab.api.tapir.QueryStringParams._
 import sttp.tapir._
@@ -18,10 +18,10 @@ import sttp.tapir.server.PartialServerEndpoint
   * - fourth for adding new apartment,
   * - fifth for deleting apartment by id.
   */
-trait ApartmentsEndpointsDefinition[F[_]] extends SecuritySupport[F] {
+trait ApartmentsEndpointsDefinition[F[_]] extends SecuritySupport[F] with CustomStatusMappings {
 
-  val listApartments: PartialServerEndpoint[ApiKey, Paging, String, List[Apartment], Nothing, F] =
-    securedEndpoint.get
+  val listApartments: PartialServerEndpoint[ApiKey, Paging, ApiError, List[Apartment], Nothing, F] =
+    securedWithStatuses(BadRequest).get
       .in("v1" / "data" / "apartments")
       .in(pagingIn)
       .out(
@@ -36,8 +36,8 @@ trait ApartmentsEndpointsDefinition[F[_]] extends SecuritySupport[F] {
       )
       .description("An endpoint responsible for listing all available apartments")
 
-  val getApartment: PartialServerEndpoint[ApiKey, Int, String, Apartment, Nothing, F] =
-    securedEndpoint.get
+  val getApartment: PartialServerEndpoint[ApiKey, Int, ApiError, Apartment, Nothing, F] =
+    securedWithStatuses(NotFound).get
       .in("v1" / "data" / "apartments")
       .in(
         path[Int]("id")
@@ -50,8 +50,8 @@ trait ApartmentsEndpointsDefinition[F[_]] extends SecuritySupport[F] {
       )
       .description("An endpoint responsible for getting specific apartment by id")
 
-  val findApartment: PartialServerEndpoint[ApiKey, Address, String, Apartment, Nothing, F] =
-    securedEndpoint.get
+  val findApartment: PartialServerEndpoint[ApiKey, Address, ApiError, Apartment, Nothing, F] =
+    securedWithStatuses(NotFound, BadRequest).get
       .in("v1" / "data" / "apartments" / "search")
       .in(addressIn)
       .out(
@@ -61,8 +61,8 @@ trait ApartmentsEndpointsDefinition[F[_]] extends SecuritySupport[F] {
       )
       .description("An endpoint responsible for finding specific apartment by search predicates")
 
-  val addApartment: PartialServerEndpoint[ApiKey, Apartment, String, Apartment, Nothing, F] =
-    securedEndpoint.post
+  val addApartment: PartialServerEndpoint[ApiKey, Apartment, ApiError, Apartment, Nothing, F] =
+    securedWithStatuses(BadRequest).post
       .in("v1" / "data" / "apartments")
       .in(
         jsonBody[Apartment]
@@ -76,8 +76,8 @@ trait ApartmentsEndpointsDefinition[F[_]] extends SecuritySupport[F] {
       )
       .description("An endpoint responsible for adding new apartment")
 
-  val deleteApartment: PartialServerEndpoint[ApiKey, Int, String, Apartment, Nothing, F] =
-    securedEndpoint.delete
+  val deleteApartment: PartialServerEndpoint[ApiKey, Int, ApiError, Apartment, Nothing, F] =
+    securedWithStatuses(NotFound).delete
       .in("v1" / "data" / "apartments")
       .in(
         path[Int]("id")

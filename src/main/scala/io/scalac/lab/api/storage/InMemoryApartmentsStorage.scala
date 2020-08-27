@@ -2,7 +2,7 @@ package io.scalac.lab.api.storage
 
 import java.util.concurrent.atomic.AtomicLong
 
-import io.scalac.lab.api.model.Apartment
+import io.scalac.lab.api.model.{Apartment, ApiError}
 
 import scala.concurrent.Future
 
@@ -16,40 +16,41 @@ class InMemoryApartmentsStorage(initState: () => List[Apartment] = () => List.em
   private val storageId = new AtomicLong()
   private var storage: List[Apartment] = initState()
 
-  override def list(from: Int, limit: Option[Int]): Future[Either[String, List[Apartment]]] =
+  override def list(from: Int, limit: Option[Int]): Future[Either[ApiError, List[Apartment]]] =
     Future.successful(Right(storage.slice(from, from + limit.getOrElse(storage.length))))
 
-  override def get(id: Int): Future[Either[String, Apartment]] =
+  override def get(id: Int): Future[Either[ApiError, Apartment]] =
     storage.find(_.id.contains(id)) match {
       case Some(value) => Future.successful(Right(value))
-      case None        => Future.successful(Left(s"Apartment with id: $id not found!"))
+      case None        => Future.successful(Left(ApiError.NotFoundError(s"Apartment with id: $id not found!")))
     }
 
-  override def find(city: String, street: String, number: String): Future[Either[String, Apartment]] = {
+  override def find(city: String, street: String, number: String): Future[Either[ApiError, Apartment]] = {
     storage.find { s =>
       s.address.city.equalsIgnoreCase(city) &&
       s.address.street.equalsIgnoreCase(street) &&
       s.address.number.equalsIgnoreCase(number)
     } match {
       case Some(value) => Future.successful(Right(value))
-      case None        => Future.successful(Left(s"Apartment for city: $city, street: $street, number: $number not found!"))
+      case None =>
+        Future.successful(Left(ApiError.NotFoundError(s"Apartment for city: $city, street: $street, number: $number not found!")))
     }
   }
 
-  override def save(apartment: Apartment): Future[Either[String, Apartment]] = {
+  override def save(apartment: Apartment): Future[Either[ApiError, Apartment]] = {
     val apartmentWithId = apartment.copy(id = Some(storageId.getAndIncrement()))
 
     storage = storage :+ apartmentWithId
     Future.successful(Right(apartmentWithId))
   }
 
-  override def delete(id: Int): Future[Either[String, Apartment]] = {
+  override def delete(id: Int): Future[Either[ApiError, Apartment]] = {
     storage.find(_.id.contains(id)) match {
       case Some(value) =>
         storage = storage.filterNot(_.id.contains(id))
         Future.successful(Right(value))
       case None =>
-        Future.successful(Left(s"Apartment with id: $id not found!"))
+        Future.successful(Left(ApiError.NotFoundError(s"Apartment with id: $id not found!")))
     }
   }
 }
