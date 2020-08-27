@@ -29,7 +29,7 @@ trait ApartmentsEndpointsDefinition extends Endpoints with JsonEntitiesFromSchem
 
   val getApartment: Endpoint[(Int, ApiKey), Either[String, Apartment]] =
     authenticatedEndpoint(
-      request = get(path / "v1" / "data" / "apartments" / segment[Int]("id")),
+      request = get(path / "v1" / "data" / "apartments" / segment[Int]("id", Some("The identifier of the apartment to be found"))),
       response = response(BadRequest, textResponse, Some("An error message, when something went wrong or apartment could not be found"))
         .orElse(ok(jsonResponse[Apartment], Some("An apartment found for given id"))),
       docs = EndpointDocs().withDescription(Some("An endpoint responsible for getting specific apartment by id"))
