@@ -28,7 +28,7 @@ trait ApartmentsEndpointsDefinition
   val listApartments: Endpoint[(Paging, ApiKey), Either[String, List[Apartment]]] =
     authenticatedEndpoint(
       request = get(path / "v1" / "data" / "apartments" /? pagingQueryString),
-      response = response(BadRequest, textResponse, Some("An error message, when something went wrong or apartment could not be found"))
+      response = response(BadRequest, textResponse, Some("An error message, when something went wrong"))
         .orElse(ok(jsonResponse[List[Apartment]], Some("A list of apartments"))),
       docs = EndpointDocs().withDescription(Some("An endpoint responsible for listing all available apartments"))
     )
