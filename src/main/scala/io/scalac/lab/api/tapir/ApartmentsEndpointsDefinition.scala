@@ -20,7 +20,7 @@ trait ApartmentsEndpointsDefinition {
   val listApartments: Endpoint[Unit, String, List[Apartment], Nothing] =
     endpoint.get
       .in("v1" / "data" / "apartments")
-      .errorOut(stringBody.description("An error message, when something went wrong or apartment could not be found"))
+      .errorOut(stringBody.description("An error message, when something went wrong"))
       .out(
         jsonBody[List[Apartment]]
           .description("A list of apartments")
