@@ -11,8 +11,7 @@ import io.scalac.lab.api.model.ApiError
 import io.scalac.lab.api.model.ApiError.UnauthorizedError
 import io.scalac.lab.api.security.Security.ApiKey
 import io.scalac.lab.api.security.SecurityService
-import io.scalac.lab.api.storage.InMemoryApartmentsStorage
-import io.scalac.lab.api.tapir.ApartmentsEndpointsServer
+import io.scalac.lab.api.storage.InMemoryNarrowerApartmentsStorage
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.StdIn
@@ -24,7 +23,7 @@ object ApartmentsApi extends App {
 
   private object DocumentedEndpoints
       extends ApartmentsEndpointsDefinition
-      with openapi.Endpoints
+      with openapi.EndpointsWithCustomErrors
       with openapi.JsonEntitiesFromSchemas
       with openapi.JsonSchemas {
 
@@ -45,21 +44,8 @@ object ApartmentsApi extends App {
         implicit
         tupler: Tupler.Aux[U, ApiKey, I]): DocumentedEndpoint =
       super
-        .authenticatedEndpoint(request, response, docs)
+        .authenticatedEndpoint(request, response ++ unauthorized, docs)
         .withSecurity(SecurityRequirement("apiKeyAuth", SecurityScheme("apiKey", None, Some("api-key"), Some("header"), None, None)))
-
-    override def withStatusCodes[A](responses: List[DocumentedResponse], codes: Int*): List[DocumentedResponse] = {
-      responses :++ codes.flatMap {
-        case 400 => badRequest
-        case 401 => unauthorized
-        case 404 => notFound
-      }
-    }
-
-    // We are going to return empty responses here for errors,
-    // because we want to customize status codes for each endpoint independently
-    override lazy val clientErrorsResponse: List[DocumentedResponse] = List.empty
-    override lazy val serverErrorResponse: List[DocumentedResponse] = List.empty
 
   }
 
@@ -82,7 +68,7 @@ object ApartmentsApi extends App {
     )
   }
 
-  private val apiStorage = new InMemoryApartmentsStorage()
+  private val apiStorage = new InMemoryNarrowerApartmentsStorage()
   private val apiSecurity = new SecurityService {
     override def authenticate(token: Option[String]): Future[Either[ApiError, ApiKey]] =
       token match {
