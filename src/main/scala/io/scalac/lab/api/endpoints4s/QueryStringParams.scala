@@ -1,7 +1,7 @@
 package io.scalac.lab.api.endpoints4s
 
 import endpoints4s.Validated
-import endpoints4s.algebra.Endpoints
+import endpoints4s.algebra.{Endpoints, EndpointsWithCustomErrors}
 import io.scalac.lab.api.model.{Address, Paging}
 
 /**
@@ -19,7 +19,7 @@ import io.scalac.lab.api.model.{Address, Paging}
   * - address.street cannot be empty
   * - address.number cannot be empty and needs to contain at least one digit
  **/
-trait QueryStringParams extends Endpoints {
+trait QueryStringParams extends EndpointsWithCustomErrors {
 
   private val pagingFrom = qs[Int]("from", Some("Indicates where we should start returning data from"))
   private val pagingLimit = qs[Option[Int]]("limit", Some("An optional number of rows to be returned"))

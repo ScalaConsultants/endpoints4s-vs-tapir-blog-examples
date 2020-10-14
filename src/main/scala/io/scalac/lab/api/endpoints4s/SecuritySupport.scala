@@ -1,10 +1,10 @@
 package io.scalac.lab.api.endpoints4s
 
 import endpoints4s.Tupler
-import endpoints4s.algebra.Endpoints
+import endpoints4s.algebra.{Endpoints, EndpointsWithCustomErrors}
 import io.scalac.lab.api.security.Security.ApiKey
 
-trait SecuritySupport extends Endpoints {
+trait SecuritySupport extends EndpointsWithCustomErrors {
 
   /** A request which is rejected by the server if it does not contain a valid authentication token */
   def authenticatedRequest[I, O](request: Request[I])(implicit tupler: Tupler.Aux[I, ApiKey, O]): Request[O]
